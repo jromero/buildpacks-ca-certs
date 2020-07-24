@@ -1,0 +1,13 @@
+[project]
+id = "jromero/assets-server"
+name = "asset-server"
+version = "1.0.0"
+
+[build]
+exclude = []
+
+[[build.buildpacks]]
+id = "paketo-buildpacks/nginx"
+
+[[build.buildpacks]]
+uri = "static-buildpack/"

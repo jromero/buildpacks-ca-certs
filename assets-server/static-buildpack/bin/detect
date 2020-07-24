@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+# GET ARGS
+plan_path=$2
+
+# CHECK IF APPLICABLE 
+if [[ ! -d "static" ]]; then
+   exit 100
+fi
+
+# DECLARE DEPENDENCIES
+cat >> "${plan_path}" <<EOL
+[[requires]]
+name = "nginx"
+EOL
