@@ -22,3 +22,29 @@ A challenge password []:
 
 $ openssl x509 -req -sha256 -days 365 -in server.csr -signkey server.key -out server.crt
 ```
+
+### Adding certs to macOS
+
+https://tosbourn.com/getting-os-x-to-trust-self-signed-ssl-certificates/
+
+
+### badssl.com
+
+Self-signed: https://self-signed.badssl.com
+
+Extract certificate:
+
+1. Run the command:
+    ```shell script
+    echo | openssl s_client -servername self-signed.badssl.com -connect self-signed.badssl.com:443
+    ```
+2. Extract content within and including the following tags: `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE----`
+
+## Questions
+
+On macOS, when a user installs a self-signed cert at the system level does this satisfy the following?
+
+- Requests from `pack`? ✅
+- Requests from within a docker container?
+    - ... with network=`bridged`? ❌
+    - ... with network=`host`? ❌

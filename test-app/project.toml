@@ -1,0 +1,13 @@
+[project]
+id = "jromero/test-app"
+name = "test-app"
+version = "1.0.0"
+
+[build]
+exclude = []
+
+[[build.buildpacks]]
+uri = "self-signed-check-buildpack/"
+
+[[build.buildpacks]]
+uri = "bash-script-buildpack/"

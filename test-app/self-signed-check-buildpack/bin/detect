@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+# TODO: request
+curl -sv https://self-signed.badssl.com/ | grep "<title>self-signed.badssl.com</title>"

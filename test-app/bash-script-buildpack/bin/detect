@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+# 1. CHECK IF APPLICABLE 
+if [[ ! -f "app.sh" ]]; then
+   exit 100
+fi

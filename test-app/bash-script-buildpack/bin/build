@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+echo "---> Bash Script buildpack"
+
+# 1. INPUT ARGUMENTS
+layers_dir=$1
+
+# 2. SET DEFAULT START COMMAND
+cat >> "${layers_dir}/launch.toml" <<EOL
+[[processes]]
+type = "web"
+command = "./app.sh"
+EOL
