@@ -47,7 +47,34 @@ $ openssl x509 -req -sha256 -days 365 -in server.csr -signkey server.key -out se
 
 #### Adding certs to macOS
 
-https://tosbourn.com/getting-os-x-to-trust-self-signed-ssl-certificates/
+Manually: https://tosbourn.com/getting-os-x-to-trust-self-signed-ssl-certificates/
+
+```shell script
+sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain certs/badssl.pem
+```
+
+Alternatively,
+
+```shell script
+mkdir -p ~/.docker/certs.d/
+cp certs/badssl.pem ~/.docker/certs.d/badssl.crt
+```
+
+#### Accessing Docker VM
+
+```shell script
+screen ~/Library/Containers/com.docker.docker/Data/vms/0/tty
+```
+_Stopped working in  2.3.0.4_
+
+OR
+
+```shell script
+docker run -it --rm --privileged --pid=host justincormack/nsenter1
+```
+
+
+> NOTE: To work within the docker VM filesystem: `chroot /containers/services/docker/rootfs`
 
 #### Questions
 
@@ -71,12 +98,29 @@ Running `update-ca-certificates` yields the following change:
             └── ca-certificates.crt                                      # cert concatenated into this file
 ```
 
+> **Important**: `c275f070.0` is required for OpenSSL when configured with only `CAPath`.
+>
+> - It is the same contents (typically a link to the original file) with a [specific name based on a hashing algorithm](http://manpages.ubuntu.com/manpages/focal/en/man1/c_rehash.1ssl.html).
+> - [Explanation](https://stackoverflow.com/a/34095441) of hash algo
+
 ## Solutions
 
 To test these solutions you should be able to run:
 
 ```shell script
 echo | openssl s_client -servername self-signed.badssl.com -connect self-signed.badssl.com:443 | grep Verif
+```
+
+OR
+
+```shell script
+wget -O - https://self-signed.badssl.com
+```
+
+---
+
+```shell script
+echo | openssl s_client -servername google.com -connect google.com:443 | grep Verif
 ```
 
 ### Extending builders
@@ -98,9 +142,9 @@ echo | openssl s_client -servername self-signed.badssl.com -connect self-signed.
 
 On a [debian](#debian) based image, users are able to mount a directory with preconfigured contents of `/etc/ssl/certs`.
 
-> **Important**: `c275f070.0` is required. It is the same contents (typically a link to the original file) with a [specific name based on a hashing algorithm](http://manpages.ubuntu.com/manpages/focal/en/man1/c_rehash.1ssl.html).
->
-Running this command should allow requests to https://self-signed.badssl.com
+#### Option 1 - local certs dir
+
+The following command will overwrite the `/etc/ssl/certs` with the contents of [certs](certs).
 
 ```shell script
 docker run --volume="${PWD}/certs:/etc/ssl/certs:rw" -it --rm gcr.io/paketo-buildpacks/builder:base /bin/bash
@@ -110,4 +154,21 @@ To verify:
 
 ```shell script
 echo | openssl s_client -servername self-signed.badssl.com -connect self-signed.badssl.com:443 | grep Verif
+```
+
+#### Option 2 - mount docker VM certs
+
+** Tested on macOS **
+
+The following command will overwrite the `/etc/ssl/certs` and `/usr/share/ca-certificates/` with the contents of the docker VM. The docker VM inherits system certificates. Effectively this command inherits all system certs.
+
+> **NOTE:** This is only possible when the directories `/etc/` and `/usr/` not being shared by the host.
+
+```shell script
+docker run \
+    --volume="/etc/ssl/certs:/etc/ssl/certs:ro" \
+    --volume="/usr/share/ca-certificates/:/usr/share/ca-certificates/:ro" \
+    -it --rm \
+    gcr.io/paketo-buildpacks/builder:base \
+    /bin/bash
 ```
