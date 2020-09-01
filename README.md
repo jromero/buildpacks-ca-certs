@@ -108,7 +108,7 @@ Running `update-ca-certificates` yields the following change:
 To test these solutions you should be able to run:
 
 ```shell script
-echo | openssl s_client -servername self-signed.badssl.com -connect self-signed.badssl.com:443 | grep Verif
+echo | openssl s_client -CAfile /etc/ssl/certs/ca-certificates.crt -servername self-signed.badssl.com -connect self-signed.badssl.com:443 | grep Verif
 ```
 
 OR
@@ -120,7 +120,7 @@ wget -O - https://self-signed.badssl.com
 ---
 
 ```shell script
-echo | openssl s_client -servername google.com -connect google.com:443 | grep Verif
+echo | openssl s_client -CAfile /etc/ssl/certs/ca-certificates.crt -servername google.com -connect google.com:443 | grep Verif
 ```
 
 ### Extending builders
@@ -135,7 +135,7 @@ To verify:
 
 ```shell script
 docker run -it --rm extended-builder /bin/bash
-echo | openssl s_client -servername self-signed.badssl.com -connect self-signed.badssl.com:443 | grep Verif
+echo | openssl s_client -CAfile /etc/ssl/certs/ca-certificates.crt -servername self-signed.badssl.com -connect self-signed.badssl.com:443 | grep Verif
 ```
 
 ### Using volume mounts
@@ -153,22 +153,27 @@ docker run --volume="${PWD}/certs:/etc/ssl/certs:rw" -it --rm gcr.io/paketo-buil
 To verify:
 
 ```shell script
-echo | openssl s_client -servername self-signed.badssl.com -connect self-signed.badssl.com:443 | grep Verif
+echo | openssl s_client -CAfile /etc/ssl/certs/ca-certificates.crt -servername self-signed.badssl.com -connect self-signed.badssl.com:443 | grep Verif
 ```
 
 #### Option 2 - mount docker VM certs
 
-** Tested on macOS **
+
+Prerequisite: cert is installed at the OS level.
+
+* For macOS: `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain certs/badssl.pem`
+* For Windows: https://support.kaspersky.com/CyberTrace/1.0/en-US/174127.htm
 
 The following command will overwrite the `/etc/ssl/certs` and `/usr/share/ca-certificates/` with the contents of the docker VM. The docker VM inherits system certificates. Effectively this command inherits all system certs.
 
 > **NOTE:** This is only possible when the directories `/etc/` and `/usr/` not being shared by the host.
 
 ```shell script
-docker run \
-    --volume="/etc/ssl/certs:/etc/ssl/certs:ro" \
-    --volume="/usr/share/ca-certificates/:/usr/share/ca-certificates/:ro" \
-    -it --rm \
-    gcr.io/paketo-buildpacks/builder:base \
-    /bin/bash
+docker run --volume="/etc/ssl/certs:/etc/ssl/certs:ro" --volume="/usr/share/ca-certificates/:/usr/share/ca-certificates/:ro" -it --rm gcr.io/paketo-buildpacks/builder:base /bin/bash
+```
+
+To verify:
+
+```shell script
+echo | openssl s_client -CAfile /etc/ssl/certs/ca-certificates.crt -servername self-signed.badssl.com -connect self-signed.badssl.com:443 | grep Verif
 ```
